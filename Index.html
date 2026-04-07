@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chausson Partners — Invoice Wizard</title>
+<style>
+:root {
+  --blue: #185FA5; --blue-dk: #0C447C; --blue-lt: #E6F1FB; --blue-bd: #B5D4F4;
+  --green: #1D9E75; --green-dk: #085041; --green-lt: #EAF3DE; --green-bd: #9FE1CB;
+  --amber-lt: #FAEEDA; --amber-tx: #633806;
+  --red-lt: #FCEBEB; --red-bd: #F7C1C1; --red-tx: #A32D2D;
+  --tx: #1a1a1a; --tx2: #6b7280; --tx3: #9ca3af;
+  --bd: #e5e7eb; --bd2: #d1d5db;
+  --bg: #ffffff; --bg2: #f9fafb; --bg3: #f3f4f6;
+  --r: 8px; --rl: 12px;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg3); color: var(--tx); min-height: 100vh; }
+
+.page-hdr { background: var(--bg); border-bottom: 1px solid var(--bd); padding: 14px 28px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+.logo { font-size: 15px; font-weight: 700; color: var(--tx); letter-spacing: -0.02em; }
+.logo span { color: var(--blue); }
+.hdr-tag { font-size: 11px; color: var(--tx2); background: var(--bg2); border: 1px solid var(--bd); padding: 2px 9px; border-radius: 20px; font-weight: 500; }
+
+.wiz { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 4rem; }
+
+.stepper { display: flex; align-items: flex-start; margin-bottom: 2.5rem; }
+.sc { display: flex; flex-direction: column; align-items: center; }
+.circle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--bd2); background: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: var(--tx2); flex-shrink: 0; transition: all 0.2s; }
+.circle.active { background: var(--blue); border-color: var(--blue); color: white; }
+.circle.done { background: var(--green); border-color: var(--green); color: white; font-size: 11px; }
+.sline { flex: 1; height: 2px; background: var(--bd); margin-top: 15px; transition: background 0.3s; }
+.sline.done { background: var(--green); }
+.slabel { font-size: 10px; color: var(--tx2); white-space: nowrap; margin-top: 5px; text-align: center; max-width: 76px; line-height: 1.3; font-weight: 500; }
+
+.card { background: var(--bg); border: 1px solid var(--bd); border-radius: var(--rl); padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.card-title { font-size: 15px; font-weight: 700; color: var(--tx); margin-bottom: 0.25rem; }
+.card-sub { font-size: 13px; color: var(--tx2); margin-bottom: 1.25rem; line-height: 1.6; }
+
+.uz { border: 2px dashed var(--bd2); border-radius: var(--r); padding: 1.125rem; text-align: center; cursor: pointer; transition: all 0.2s; }
+.uz:hover { background: var(--bg2); border-color: var(--blue); }
+.uz.has { border-style: solid; border-color: var(--green); background: var(--green-lt); }
+.uz.extr { border-style: solid; border-color: var(--blue); background: var(--blue-lt); cursor: default; }
+.uz.sm { padding: 0.75rem; }
+.utext { font-size: 12px; color: var(--tx2); margin-top: 3px; }
+.ufn { font-size: 12px; font-weight: 600; color: var(--green-dk); margin-top: 3px; }
+
+label { display: block; font-size: 11px; font-weight: 600; color: var(--tx2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.05em; }
+input { width: 100%; padding: 8px 10px; border: 1px solid var(--bd2); border-radius: var(--r); font-size: 13px; font-family: var(--font); background: var(--bg); color: var(--tx); outline: none; transition: all 0.15s; }
+input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(24,95,165,0.1); }
+input.pre { border-color: var(--green); background: #f4fcf8; }
+input::placeholder { color: var(--tx3); }
+
+.r2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.r3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.r4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+.fg { margin-bottom: 12px; }
+
+.tgrp { display: flex; gap: 10px; margin-bottom: 1.25rem; }
+.tbtn { flex: 1; padding: 12px 10px; border: 2px solid var(--bd2); border-radius: var(--r); background: transparent; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--tx2); transition: all 0.15s; line-height: 1.5; text-align: center; font-family: var(--font); }
+.tbtn:hover:not(.active) { background: var(--bg2); border-color: var(--blue); }
+.tbtn.active { border-color: var(--blue); background: var(--blue-lt); color: var(--blue-dk); }
+
+.btn-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
+.btn { padding: 9px 20px; border-radius: var(--r); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; border: 1px solid var(--bd2); background: transparent; color: var(--tx); font-family: var(--font); }
+.btn:hover { background: var(--bg2); }
+.btn-p { background: var(--blue); border-color: var(--blue); color: white; }
+.btn-p:hover { background: var(--blue-dk); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.seller-block { border: 1px solid var(--bd); border-radius: var(--rl); padding: 1.25rem; margin-bottom: 1rem; background: var(--bg2); }
+.s-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.s-num { width: 26px; height: 26px; border-radius: 50%; background: var(--green); color: white; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+.s-ttc { font-size: 12px; color: var(--green-dk); font-weight: 600; background: var(--green-lt); padding: 3px 10px; border-radius: 20px; border: 1px solid var(--green-bd); }
+
+.amtp { border-radius: var(--r); padding: 10px 14px; margin-top: 10px; display: flex; gap: 20px; font-size: 12px; }
+.amtp.bl { background: var(--blue-lt); border: 1px solid var(--blue-bd); }
+.amtp.gr { background: var(--green-lt); border: 1px solid var(--green-bd); }
+.api { display: flex; flex-direction: column; gap: 2px; }
+.apl { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
+.apl.b { color: var(--blue); } .apl.g { color: var(--green); }
+.apv { font-weight: 600; }
+.apv.b { color: var(--blue-dk); } .apv.g { color: var(--green-dk); }
+.apv.lg { font-size: 14px; }
+
+.div { border: none; border-top: 1px solid var(--bd); margin: 1rem 0; }
+.tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.02em; }
+.tb { background: var(--blue-lt); color: var(--blue-dk); }
+.tg { background: var(--green-lt); color: var(--green-dk); }
+.ta { background: var(--amber-lt); color: var(--amber-tx); }
+.tgr { background: var(--bg3); color: var(--tx2); border: 1px solid var(--bd); }
+.badge { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: white; background: var(--blue); flex-shrink: 0; }
+.bdg { background: var(--green); }
+
+.sr { display: flex; justify-content: space-between; font-size: 13px; padding: 6px 0; border-bottom: 1px solid var(--bd); }
+.sr:last-child { border-bottom: none; font-weight: 700; font-size: 15px; padding-top: 10px; }
+
+.ok-banner { background: var(--green-lt); border: 1px solid var(--green-bd); border-radius: var(--rl); padding: 1.5rem; text-align: center; margin-bottom: 1rem; }
+.dl-item { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border: 1px solid var(--bd); border-radius: var(--r); margin-bottom: 8px; background: var(--bg); transition: box-shadow 0.15s; }
+.dl-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+.spin { display: inline-block; border: 2px solid rgba(24,95,165,0.2); border-top-color: var(--blue); border-radius: 50%; animation: sp 0.6s linear infinite; vertical-align: middle; }
+.spin.sm { width: 11px; height: 11px; }
+.spin.md { width: 14px; height: 14px; }
+.spin.lg { width: 22px; height: 22px; }
+@keyframes sp { to { transform: rotate(360deg); } }
+
+.nbtn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--bd2); background: var(--bg); cursor: pointer; font-size: 18px; line-height: 1; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: var(--tx); font-family: var(--font); }
+.nbtn:hover { background: var(--bg2); border-color: var(--blue); }
+.ndsp { font-size: 20px; font-weight: 700; min-width: 28px; text-align: center; }
+
+.sec-lbl { font-size: 11px; font-weight: 700; color: var(--tx2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.u2col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1rem; }
+.ublk-title { font-size: 13px; font-weight: 600; color: var(--tx); margin-bottom: 5px; }
+.ublk-hint { font-size: 11px; color: var(--tx2); margin-bottom: 6px; }
+
+.bnr { border-radius: var(--r); padding: 9px 13px; font-size: 12px; margin-top: 6px; line-height: 1.5; }
+.bnr-g { background: var(--green-lt); border: 1px solid var(--green-bd); color: var(--green-dk); }
+.bnr-b { background: var(--blue-lt); border: 1px solid var(--blue-bd); color: var(--blue-dk); }
+.bnr-r { background: var(--red-lt); border: 1px solid var(--red-bd); color: var(--red-tx); }
+
+.num-box { background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); padding: 12px 16px; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 14px; }
+.num-box-lbl { font-size: 12px; color: var(--tx2); font-weight: 500; flex-shrink: 0; }
+.num-box input { max-width: 120px; font-size: 15px; font-weight: 700; }
+.num-preview { font-size: 12px; color: var(--tx2); line-height: 1.8; }
+.num-preview strong { color: var(--tx); }
+
+.sec-hdr { display: flex; align-items: center; gap: 10px; margin-bottom: 0.25rem; }
+
+@media (max-width: 580px) {
+  .r2,.r3,.r4,.u2col { grid-template-columns: 1fr; }
+  .tgrp { flex-direction: column; }
+  .wiz { padding: 1rem 1rem 3rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-hdr">
+  <div class="logo">Chausson <span>Partners</span></div>
+  <div class="hdr-tag">Invoice Wizard — M&A</div>
+</div>
+
+<div class="wiz">
+  <div class="stepper" id="stepper"></div>
+  <div id="body"></div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const ANTHROPIC_API_KEY = ''; // ← Paste your Anthropic API key here
+// ─────────────────────────────────────────────────────────────────────────────
+
+function dfr(d){const m=['January','February','March','April','May','June','July','August','September','October','November','December'];return `${d.getDate()} ${m[d.getMonth()]} ${d.getFullYear()}`;}
+function fmtM(v){const n=parseFloat(v)||0;return n.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';}
+function tva(h){return(parseFloat(h)||0)*0.2;}
+function ttc(h){return(parseFloat(h)||0)*1.2;}
+function mkSeller(num){return{numero:num,date:dfr(new Date()),montantHT:'',name:'',contact:'',address:'',city:'',doc:null,auto:false};}
+function toB64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result.split(',')[1]);r.onerror=rej;r.readAsDataURL(file);});}
+
+const st={
+  step:1, type:'both', startNum:'25-57',
+  ldm:{file:null,xing:false,xed:false,err:null,d:{clientName:'',clientContact:'',clientAddress:'',clientCity:'',dateContrat:'',dateAvenant:'',successFeeHT:''}},
+  fees:{file:null,xing:false,xed:false,err:null,sellers:[]},
+  ci:{numero:'25-57',date:dfr(new Date()),montantHT:'',doc:null},
+  sellers:[mkSeller('25-58')],
+  gen:false,
+};
+
+function steps(){
+  if(st.type==='client') return ['Type & N°','Client bill','Generation'];
+  if(st.type==='sellers') return ['Type & N°','Sellers bill','Generation'];
+  return ['Type & N°','Client bill','Sellers bill','Generation'];
+}
+function si(){
+  if(st.type==='client') return {1:0,2:1,5:2}[st.step]??0;
+  if(st.type==='sellers') return {1:0,4:1,5:2}[st.step]??0;
+  return {1:0,2:1,4:2,5:3}[st.step]??0;
+}
+function renum(){
+  const p=(st.startNum||'25-57').split('-');
+  const yr=p[0]||'25',base=parseInt(p[1])||57;
+  st.ci.numero=`${yr}-${base}`;
+  const off=st.type==='sellers'?0:1;
+  st.sellers.forEach((s,i)=>{if(!s.numero||s.auto)s.numero=`${yr}-${base+off+i}`;});
+}
+function numPreview(){
+  const p=(st.startNum||'25-57').split('-');
+  const yr=p[0]||'25',base=parseInt(p[1])||57,off=st.type==='sellers'?0:1;
+  let lines='';
+  if(st.type!=='sellers') lines+=`→ Client bill: <strong>${yr}-${base}</strong><br>`;
+  lines+=`→ Seller 1: <strong>${yr}-${base+off}</strong><br>`;
+  if(st.type==='both') lines+=`→ Seller 2: <strong>${yr}-${base+off+1}</strong>… `;
+  return lines;
+}
+
+function renderStepper(){
+  const ss=steps(),cur=si();
+  document.getElementById('stepper').innerHTML=ss.map((s,i)=>{
+    const done=i<cur,active=i===cur;
+    return (i>0?`<div class="sline ${done?'done':''}"></div>`:'')+
+      `<div class="sc"><div class="circle ${done?'done':active?'active':''}">${done?'✓':i+1}</div><div class="slabel">${s}</div></div>`;
+  }).join('');
+}
+
+function render(){
+  renderStepper();
+  const b=document.getElementById('body');
+  if(st.step===1) b.innerHTML=s1();
+  else if(st.step===2) b.innerHTML=s2();
+  else if(st.step===4) b.innerHTML=s4();
+  else if(st.step===5) b.innerHTML=s5();
+  bindAll();
+}
+
+// ─── STEP 1 ──────────────────────────────────────────────────────────────────
+function s1(){
+  const t=st.type;
+  return `
+  <div class="card">
+    <div class="card-title">Invoice type</div>
+    <div class="card-sub">Select which invoices need to be generated for this deal.</div>
+    <div class="tgrp">
+      <button class="tbtn ${t==='client'?'active':''}" data-type="client">
+        <div style="font-size:22px;margin-bottom:6px">👤</div>
+        <strong>Client only</strong>
+        <div style="font-size:11px;opacity:0.65;margin-top:3px">1 client invoice</div>
+      </button>
+      <button class="tbtn ${t==='sellers'?'active':''}" data-type="sellers">
+        <div style="font-size:22px;margin-bottom:6px">👥</div>
+        <strong>Other sellers</strong>
+        <div style="font-size:11px;opacity:0.65;margin-top:3px">N seller invoices</div>
+      </button>
+      <button class="tbtn ${t==='both'?'active':''}" data-type="both">
+        <div style="font-size:22px;margin-bottom:6px">🤝</div>
+        <strong>Client + other sellers</strong>
+        <div style="font-size:11px;opacity:0.65;margin-top:3px">Client + N sellers</div>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Starting invoice number</div>
+    <div class="card-sub">Invoice numbers will be auto-incremented from this starting point.</div>
+    <div class="num-box">
+      <div class="num-box-lbl">First invoice N°</div>
+      <input id="start-num" value="${st.startNum}" placeholder="25-57">
+      <div class="num-preview">${numPreview()}</div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-p" id="btn-s1">Next →</button>
+  </div>`;
+}
+
+// ─── STEP 2 ──────────────────────────────────────────────────────────────────
+function s2(){
+  const l=st.ldm,f=st.fees,d=l.d,ci=st.ci,ht=parseFloat(ci.montantHT)||0;
+  const pf=v=>v?'pre':'';
+  return `
+  <div class="card">
+    <div class="sec-hdr">
+      <div class="badge">C</div>
+      <span class="card-title">Client bill</span>
+      ${l.xed?'<span class="tag tg">✓ LDM extracted</span>':l.xing?`<span class="tag ta"><span class="spin sm" style="margin-right:4px"></span>Reading…</span>`:''}
+    </div>
+    <div class="card-sub">Upload the signed engagement letter and the fees breakdown — Claude will auto-fill the fields below.</div>
+
+    <div class="u2col">
+      <div>
+        <div class="ublk-title">📄 Engagement letter (LDM)</div>
+        <div class="ublk-hint">PDF or Word</div>
+        <div class="uz ${l.xed?'has':l.xing?'extr':l.file?'has':''}" id="ldm-zone">
+          <input type="file" id="ldm-input" accept=".pdf,.docx,.doc" style="display:none">
+          <div style="font-size:22px;margin-bottom:4px">${l.xed?'📄':l.xing?'⏳':'📎'}</div>
+          <div class="utext">${l.xing?`<span class="spin md" style="margin-right:6px"></span>Claude is reading…`:l.file?`✓ ${l.file.name}`:'Click to upload'}</div>
+        </div>
+        ${l.err?`<div class="bnr bnr-r">⚠️ ${l.err}</div>`:''}
+        ${l.xed?`<div class="bnr bnr-g">✓ Client details auto-filled below</div>`:''}
+        ${!l.file?`<div class="bnr bnr-b">Upload the LDM to auto-fill client info via Claude AI.</div>`:''}
+      </div>
+      <div>
+        <div class="ublk-title">💰 Fees details</div>
+        <div class="ublk-hint">Excel, PDF or image</div>
+        <div class="uz ${f.xed?'has':f.xing?'extr':f.file?'has':''}" id="fees-zone-c">
+          <input type="file" id="fees-input-c" accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg" style="display:none">
+          <div style="font-size:22px;margin-bottom:4px">${f.xed?'📊':f.xing?'⏳':'📊'}</div>
+          <div class="utext">${f.xing?`<span class="spin md" style="margin-right:6px"></span>Extracting fees…`:f.file?`✓ ${f.file.name}`:'Click to upload'}</div>
+        </div>
+        ${f.err?`<div class="bnr bnr-r">⚠️ ${f.err}</div>`:''}
+        ${f.xed&&f.sellers.length?`<div class="bnr bnr-g">✓ ${f.sellers.length} seller${f.sellers.length>1?'s':''} detected</div>`:''}
+        ${!f.file?`<div class="bnr bnr-b">Upload fees breakdown to auto-generate seller invoices.</div>`:''}
+      </div>
+    </div>
+
+    <div class="div"></div>
+    <div class="sec-lbl" style="margin-bottom:1rem">Client details</div>
+    <div class="r2">
+      <div class="fg"><label>Company name</label><input id="l-cn" value="${d.clientName}" class="${pf(d.clientName)}" placeholder="HELIOS SAS…"></div>
+      <div class="fg"><label>Contact</label><input id="l-cc" value="${d.clientContact}" class="${pf(d.clientContact)}" placeholder="Ms. Dupont…"></div>
+    </div>
+    <div class="r2">
+      <div class="fg"><label>Address</label><input id="l-ca" value="${d.clientAddress}" class="${pf(d.clientAddress)}" placeholder="9 rue des Colonnes"></div>
+      <div class="fg"><label>Postcode / City</label><input id="l-cy" value="${d.clientCity}" class="${pf(d.clientCity)}" placeholder="75002 Paris"></div>
+    </div>
+    <div class="r3">
+      <div class="fg"><label>Contract date</label><input id="l-dc" value="${d.dateContrat}" class="${pf(d.dateContrat)}" placeholder="26 March 2024"></div>
+      <div class="fg"><label>Amendment date</label><input id="l-da" value="${d.dateAvenant}" class="${pf(d.dateAvenant)}" placeholder="optional"></div>
+      <div class="fg"><label>Success fee excl. VAT (€)</label><input id="l-sf" type="number" value="${d.successFeeHT}" class="${pf(d.successFeeHT)}" placeholder="100000"></div>
+    </div>
+    <div class="div"></div>
+    <div class="r3">
+      <div class="fg"><label>Invoice N°</label><input id="ci-num" value="${ci.numero}"></div>
+      <div class="fg"><label>Invoice date</label><input id="ci-date" value="${ci.date}"></div>
+      <div class="fg"><label>Amount excl. VAT (€)</label><input id="ci-ht" type="number" value="${ci.montantHT}" class="${pf(ci.montantHT)}" placeholder="0"></div>
+    </div>
+    ${ht>0?`<div class="amtp bl">
+      <div class="api"><span class="apl b">Excl. VAT</span><span class="apv b">${fmtM(ht)}</span></div>
+      <div class="api"><span class="apl b">VAT 20%</span><span class="apv b">${fmtM(tva(ht))}</span></div>
+      <div class="api"><span class="apl b">Incl. VAT</span><span class="apv b lg">${fmtM(ttc(ht))}</span></div>
+    </div>`:''}
+    <div style="margin-top:1rem">
+      <div class="sec-lbl">Supporting document (optional)</div>
+      <div class="uz sm ${ci.doc?'has':''}" id="ci-doc-zone">
+        <input type="file" id="ci-doc-input" accept=".pdf,.docx,.xlsx" style="display:none">
+        <div class="utext">${ci.doc?`✓ ${ci.doc.name}`:'+ Attach a document (SPA, closing memo…)'}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="btn-b2">← Back</button>
+    <button class="btn btn-p" id="btn-s2">${st.type==='client'?'Review →':'Sellers →'}</button>
+  </div>`;
+}
+
+// ─── STEP 4 ──────────────────────────────────────────────────────────────────
+function s4(){
+  const f=st.fees,ss=st.sellers;
+  const tot=ss.reduce((a,s)=>a+(parseFloat(s.montantHT)||0),0);
+  return `
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.25rem">
+      <div class="sec-hdr" style="margin-bottom:0">
+        <div class="badge bdg">S</div>
+        <span class="card-title">Sellers bill</span>
+        <span class="tag tg">${ss.length} seller${ss.length>1?'s':''}</span>
+        ${ss.some(s=>s.auto)?'<span class="tag tb">Auto-filled</span>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:11px;color:var(--tx2)">Count:</span>
+        <button class="nbtn" id="rem-s">−</button>
+        <span class="ndsp">${ss.length}</span>
+        <button class="nbtn" id="add-s">+</button>
+      </div>
+    </div>
+    <div class="card-sub">Upload the fees breakdown — Claude will auto-generate all seller invoices. You can review and adjust each one below.</div>
+
+    <div style="margin-bottom:1.25rem">
+      <div class="ublk-title" style="margin-bottom:5px">💰 Fees details <span style="font-size:11px;font-weight:400;color:var(--tx2)">— Excel, PDF or image</span></div>
+      <div class="uz ${f.xed?'has':f.xing?'extr':f.file?'has':''}" id="fees-zone-s">
+        <input type="file" id="fees-input-s" accept=".pdf,.xlsx,.xls,.png,.jpg,.jpeg" style="display:none">
+        <div style="font-size:22px;margin-bottom:4px">${f.xed?'📊':f.xing?'⏳':'📊'}</div>
+        <div class="utext">${f.xing?`<span class="spin md" style="margin-right:6px"></span>Claude is reading the fees breakdown…`:f.file?`✓ ${f.file.name}`:' Click to upload — invoices will be auto-generated'}</div>
+      </div>
+      ${f.err?`<div class="bnr bnr-r">⚠️ ${f.err}</div>`:''}
+      ${f.xed&&f.sellers.length?`<div class="bnr bnr-g">✓ ${ss.length} invoice${ss.length>1?'s':''} auto-generated — review and adjust below</div>`:''}
+    </div>
+
+    ${ss.map((s,i)=>`
+    <div class="seller-block">
+      <div class="s-hdr">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="s-num">${i+1}</div>
+          <span style="font-size:14px;font-weight:600">${s.name||`Seller ${i+1}`}</span>
+          ${s.auto?'<span class="tag tb" style="font-size:9px">Auto</span>':''}
+        </div>
+        ${(parseFloat(s.montantHT)||0)>0?`<span class="s-ttc">Incl. VAT ${fmtM(ttc(s.montantHT))}</span>`:''}
+      </div>
+      <div class="r4">
+        <div class="fg"><label>Invoice N°</label><input class="s-n" data-i="${i}" value="${s.numero}"></div>
+        <div class="fg"><label>Date</label><input class="s-d" data-i="${i}" value="${s.date}"></div>
+        <div class="fg" style="grid-column:span 2"><label>Amount excl. VAT (€)</label><input class="s-h" data-i="${i}" type="number" value="${s.montantHT}" placeholder="0" ${s.auto&&s.montantHT?'class="pre"':''}></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Company / Name</label><input class="s-nm" data-i="${i}" value="${s.name}" placeholder="SAS Vendeur…" ${s.auto&&s.name?'class="pre"':''}></div>
+        <div class="fg"><label>Contact</label><input class="s-c" data-i="${i}" value="${s.contact}" placeholder="Mr. / Ms. …"></div>
+      </div>
+      <div class="r2">
+        <div class="fg"><label>Address</label><input class="s-a" data-i="${i}" value="${s.address}" placeholder="12 rue…"></div>
+        <div class="fg"><label>Postcode / City</label><input class="s-ci" data-i="${i}" value="${s.city}" placeholder="75001 Paris"></div>
+      </div>
+      <div style="margin-top:0.625rem">
+        <div class="sec-lbl">Supporting document (optional)</div>
+        <div class="uz sm ${s.doc?'has':''}" onclick="document.getElementById('sd-${i}').click()">
+          <input type="file" id="sd-${i}" accept=".pdf,.docx,.xlsx" style="display:none" data-i="${i}">
+          <div class="utext">${s.doc?`✓ ${s.doc.name}`:'+ Attach a document'}</div>
+        </div>
+      </div>
+    </div>`).join('')}
+
+    ${tot>0?`<div style="border-top:1px solid var(--bd);padding-top:1rem;margin-top:0.5rem">
+      <div class="sr"><span style="color:var(--tx2)">Total excl. VAT</span><span>${fmtM(tot)}</span></div>
+      <div class="sr"><span style="color:var(--tx2)">VAT 20%</span><span>${fmtM(tva(tot))}</span></div>
+      <div class="sr"><span>Total incl. VAT</span><span>${fmtM(ttc(tot))}</span></div>
+    </div>`:''}
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="btn-b4">← Back</button>
+    <button class="btn btn-p" id="btn-s4">Review →</button>
+  </div>`;
+}
+
+// ─── STEP 5 ──────────────────────────────────────────────────────────────────
+function s5(){
+  if(st.gen) return `<div class="card" style="text-align:center;padding:4rem"><div class="spin lg" style="margin-bottom:1rem"></div><br><span style="color:var(--tx2);font-size:14px">Generating invoices…</span></div>`;
+  const invs=[];
+  if(st.type!=='sellers') invs.push({label:`Client invoice — N° ${st.ci.numero}`,tag:'Client',gc:'b',ht:st.ci.montantHT,date:st.ci.date,dest:st.ldm.d.clientName,contact:st.ldm.d.clientContact,addr:st.ldm.d.clientAddress,city:st.ldm.d.clientCity,ref:`Engagement letter dated ${st.ldm.d.dateContrat}${st.ldm.d.dateAvenant?' and amendment dated '+st.ldm.d.dateAvenant:''}`,doc:st.ci.doc});
+  st.sellers.forEach((s,i)=>invs.push({label:`Seller ${i+1} invoice — N° ${s.numero}`,tag:`S${i+1}`,gc:'g',ht:s.montantHT||'0',date:s.date,dest:s.name||'—',contact:s.contact,addr:s.address,city:s.city,ref:'Engagement letter',doc:s.doc}));
+  const tot=invs.reduce((a,iv)=>a+ttc(iv.ht),0);
+  return `
+  <div class="ok-banner">
+    <div style="font-size:40px;margin-bottom:8px">✅</div>
+    <div style="font-size:19px;font-weight:700;color:var(--green-dk)">${invs.length} invoice${invs.length>1?'s':''} ready</div>
+    <div style="font-size:13px;color:var(--green);margin-top:4px;font-weight:500">Total incl. VAT: ${fmtM(tot)}</div>
+  </div>
+  ${invs.map((iv,i)=>`
+  <div class="dl-item">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="badge ${iv.gc==='g'?'bdg':''}">${iv.tag}</div>
+      <div>
+        <div style="font-size:14px;font-weight:600">${iv.label}</div>
+        <div style="font-size:12px;color:var(--tx2);margin-top:2px">${iv.dest} — ${iv.date} — Incl. VAT ${fmtM(ttc(iv.ht))}${iv.doc?` — 📎 ${iv.doc.name}`:''}</div>
+      </div>
+    </div>
+    <button class="btn btn-p" style="font-size:12px;padding:7px 14px;white-space:nowrap" onclick="dlInv(${i})">⬇ Download .docx</button>
+  </div>`).join('')}
+  <div class="btn-row" style="margin-top:1rem">
+    <button class="btn" id="btn-b5">← Edit</button>
+    <button class="btn" onclick="resetAll()">+ New deal</button>
+  </div>`;
+}
+
+// ─── EXTRACTION ───────────────────────────────────────────────────────────────
+async function callAPI(messages, maxTokens=600){
+  const key=ANTHROPIC_API_KEY||window._apiKey||'';
+  if(!key) throw new Error('API key not configured. Please add your Anthropic API key in the HTML file (ANTHROPIC_API_KEY variable).');
+  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,messages})
+  });
+  if(!resp.ok) throw new Error(`API error ${resp.status}`);
+  const data=await resp.json();
+  return data.content.map(c=>c.text||'').join('').trim().replace(/```json|```/g,'').trim();
+}
+
+async function extractLDM(file){
+  st.ldm.xing=true;st.ldm.err=null;render();
+  try{
+    const b64=await toB64(file);
+    const isPdf=file.name.toLowerCase().endsWith('.pdf');
+    const mt=isPdf?'application/pdf':'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    const txt=await callAPI([{role:'user',content:[
+      {type:'document',source:{type:'base64',media_type:mt,data:b64}},
+      {type:'text',text:`Analyse this M&A engagement letter. Reply ONLY with a valid JSON object, no markdown:\n{"clientName":"full company name","clientContact":"contact name with title e.g. Ms. Dupont","clientAddress":"street address only","clientCity":"postcode and city e.g. 75002 Paris","dateContrat":"contract date e.g. 26 March 2024","dateAvenant":"amendment date if present else empty string","successFeeHT":"success fee excl VAT as digits only e.g. 100000"}`}
+    ]}]);
+    const p=JSON.parse(txt);
+    st.ldm.d={clientName:p.clientName||'',clientContact:p.clientContact||'',clientAddress:p.clientAddress||'',clientCity:p.clientCity||'',dateContrat:p.dateContrat||'',dateAvenant:p.dateAvenant||'',successFeeHT:p.successFeeHT||''};
+    if(st.ldm.d.successFeeHT) st.ci.montantHT=st.ldm.d.successFeeHT;
+    st.ldm.xed=true;
+  }catch(e){
+    st.ldm.err=e.message.includes('API key')?e.message:'Auto-extraction failed — please fill in manually.';
+    st.ldm.xed=false;
+  }
+  st.ldm.xing=false;render();
+}
+
+async function extractFees(file){
+  st.fees.xing=true;st.fees.err=null;render();
+  try{
+    const b64=await toB64(file);
+    const ext=file.name.toLowerCase().split('.').pop();
+    const isImg=['png','jpg','jpeg'].includes(ext);
+    const mt=isImg?`image/${ext==='jpg'?'jpeg':ext}`:ext==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+    const p=(st.startNum||'25-57').split('-');
+    const yr=p[0],base=parseInt(p[1]||57),off=st.type==='sellers'?0:1;
+    const cb=isImg?{type:'image',source:{type:'base64',media_type:mt,data:b64}}:{type:'document',source:{type:'base64',media_type:mt,data:b64}};
+    const txt=await callAPI([{role:'user',content:[cb,{type:'text',text:`This is a fees breakdown for an M&A deal. Extract each seller/party and their respective fee. Reply ONLY with a valid JSON array, no markdown:\n[{"name":"company or person name","montantHT":"fee excl VAT as digits only e.g. 50000"}]\nIf no sellers found, return [].`}]}],800);
+    const parsed=JSON.parse(txt);
+    if(Array.isArray(parsed)&&parsed.length>0){
+      st.fees.sellers=parsed;
+      st.sellers=parsed.map((s,i)=>({numero:`${yr}-${base+off+i}`,date:dfr(new Date()),montantHT:s.montantHT||'',name:s.name||'',contact:'',address:'',city:'',doc:null,auto:true}));
+      st.fees.xed=true;
+    }else{
+      st.fees.sellers=[];st.fees.xed=true;
+    }
+  }catch(e){
+    st.fees.err=e.message.includes('API key')?e.message:'Extraction failed — please fill in seller details manually.';
+    st.fees.xed=false;
+  }
+  st.fees.xing=false;render();
+}
+
+// ─── GENERATE DOCX ───────────────────────────────────────────────────────────
+function genDocx(iv){
+  const lines=[
+    'CHAUSSON PARTNERS',
+    '9 rue du Faubourg Saint-Honoré — 75008 Paris',
+    '',
+    iv.dest+(iv.contact?'\n'+iv.contact:'')+(iv.addr?'\n'+iv.addr+(iv.city?' — '+iv.city:''):''),
+    '',
+    `Paris, ${iv.date}`,
+    '',
+    `INVOICE N° ${iv.num}`,
+    '',
+    iv.ref,
+    '',
+    `Success fee excl. VAT : ${fmtM(iv.ht)}`,
+    `VAT 20%               : ${fmtM(tva(iv.ht))}`,
+    `Total incl. VAT       : ${fmtM(ttc(iv.ht))}`,
+    '',
+    'Payment by bank transfer:',
+    'IBAN : FR76 1695 8000 0184 0968 5660 501',
+    'BIC  : QNTOFRP1XXX',
+    '',
+    'Payment due on receipt of invoice.',
+    'No discount for early payment.',
+    'Late payment interest applies at the legal rate. Flat-rate recovery fee: €40.',
+  ];
+  const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`Invoice_${iv.num.replace(/[^a-zA-Z0-9]/g,'_')}_${(iv.dest||'').replace(/[^a-zA-Z0-9]/g,'_').substring(0,20)}.txt`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+
+// ─── BIND ─────────────────────────────────────────────────────────────────────
+function bindAll(){
+  const on=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener('click',fn);};
+  const inp=(id,fn)=>{const el=document.getElementById(id);if(el)el.addEventListener('input',fn);};
+
+  if(st.step===1){
+    document.querySelectorAll('.tbtn').forEach(b=>b.addEventListener('click',()=>{st.type=b.dataset.type;renum();render();}));
+    inp('start-num',e=>{st.startNum=e.target.value;renum();render();});
+    on('btn-s1',()=>{renum();st.step=st.type==='sellers'?4:2;render();});
+  }
+
+  if(st.step===2){
+    const lz=document.getElementById('ldm-zone');
+    if(lz&&!st.ldm.xing) lz.addEventListener('click',()=>document.getElementById('ldm-input')?.click());
+    document.getElementById('ldm-input')?.addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;st.ldm.file=f;extractLDM(f);});
+    const fzc=document.getElementById('fees-zone-c');
+    if(fzc&&!st.fees.xing) fzc.addEventListener('click',()=>document.getElementById('fees-input-c')?.click());
+    document.getElementById('fees-input-c')?.addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;st.fees.file=f;extractFees(f);});
+    inp('l-cn',e=>{st.ldm.d.clientName=e.target.value;});
+    inp('l-cc',e=>{st.ldm.d.clientContact=e.target.value;});
+    inp('l-ca',e=>{st.ldm.d.clientAddress=e.target.value;});
+    inp('l-cy',e=>{st.ldm.d.clientCity=e.target.value;});
+    inp('l-dc',e=>{st.ldm.d.dateContrat=e.target.value;});
+    inp('l-da',e=>{st.ldm.d.dateAvenant=e.target.value;});
+    inp('l-sf',e=>{st.ldm.d.successFeeHT=e.target.value;st.ci.montantHT=e.target.value;render();});
+    inp('ci-num',e=>{st.ci.numero=e.target.value;});
+    inp('ci-date',e=>{st.ci.date=e.target.value;});
+    inp('ci-ht',e=>{st.ci.montantHT=e.target.value;render();});
+    const cdz=document.getElementById('ci-doc-zone');
+    if(cdz) cdz.addEventListener('click',()=>document.getElementById('ci-doc-input')?.click());
+    document.getElementById('ci-doc-input')?.addEventListener('change',e=>{st.ci.doc=e.target.files[0]||null;render();});
+    on('btn-b2',()=>{st.step=1;render();});
+    on('btn-s2',()=>{
+      if(st.type==='client'){st.step=5;st.gen=true;render();setTimeout(()=>{st.gen=false;render();},1200);}
+      else{st.step=4;render();}
+    });
+  }
+
+  if(st.step===4){
+    const fzs=document.getElementById('fees-zone-s');
+    if(fzs&&!st.fees.xing) fzs.addEventListener('click',()=>document.getElementById('fees-input-s')?.click());
+    document.getElementById('fees-input-s')?.addEventListener('change',e=>{const f=e.target.files[0];if(!f)return;st.fees.file=f;extractFees(f);});
+    on('add-s',()=>{const p=(st.startNum||'25-57').split('-');const off=st.type==='sellers'?0:1;st.sellers.push(mkSeller(`${p[0]}-${parseInt(p[1]||57)+off+st.sellers.length}`));render();});
+    on('rem-s',()=>{if(st.sellers.length>1){st.sellers.pop();render();}});
+    document.querySelectorAll('.s-n').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].numero=e.target.value;}));
+    document.querySelectorAll('.s-d').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].date=e.target.value;}));
+    document.querySelectorAll('.s-h').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].montantHT=e.target.value;render();}));
+    document.querySelectorAll('.s-nm').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].name=e.target.value;}));
+    document.querySelectorAll('.s-c').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].contact=e.target.value;}));
+    document.querySelectorAll('.s-a').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].address=e.target.value;}));
+    document.querySelectorAll('.s-ci').forEach(el=>el.addEventListener('input',e=>{st.sellers[+e.target.dataset.i].city=e.target.value;}));
+    document.querySelectorAll('[id^="sd-"]').forEach(el=>el.addEventListener('change',e=>{st.sellers[+e.target.dataset.i].doc=e.target.files[0]||null;render();}));
+    on('btn-b4',()=>{st.step=st.type==='sellers'?1:2;render();});
+    on('btn-s4',()=>{st.step=5;st.gen=true;render();setTimeout(()=>{st.gen=false;render();},1200);});
+  }
+
+  if(st.step===5){
+    on('btn-b5',()=>{st.step=st.type==='client'?2:4;render();});
+  }
+}
+
+window.dlInv=function(i){
+  const invs=[];
+  if(st.type!=='sellers') invs.push({num:st.ci.numero,date:st.ci.date,ht:st.ci.montantHT,dest:st.ldm.d.clientName,contact:st.ldm.d.clientContact,addr:st.ldm.d.clientAddress,city:st.ldm.d.clientCity,ref:`Engagement letter dated ${st.ldm.d.dateContrat}${st.ldm.d.dateAvenant?' and amendment dated '+st.ldm.d.dateAvenant:''}`});
+  st.sellers.forEach(s=>invs.push({num:s.numero,date:s.date,ht:s.montantHT||'0',dest:s.name||'—',contact:s.contact,addr:s.address,city:s.city,ref:'Engagement letter'}));
+  genDocx(invs[i]);
+};
+window.resetAll=function(){
+  Object.assign(st,{step:1,type:'both',startNum:'25-57',ldm:{file:null,xing:false,xed:false,err:null,d:{clientName:'',clientContact:'',clientAddress:'',clientCity:'',dateContrat:'',dateAvenant:'',successFeeHT:''}},fees:{file:null,xing:false,xed:false,err:null,sellers:[]},ci:{numero:'25-57',date:dfr(new Date()),montantHT:'',doc:null},sellers:[mkSeller('25-58')],gen:false});
+  render();
+};
+render();
+</script>
+</body>
+</html>
