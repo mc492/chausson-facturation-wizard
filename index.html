@@ -449,7 +449,7 @@ function s5(){
 async function callAPI(messages, maxTokens=600){
   const key=ANTHROPIC_API_KEY||window._apiKey||'';
   if(!key) throw new Error('API key not configured. Please add your Anthropic API key in the HTML file (ANTHROPIC_API_KEY variable).');
-  const resp=await fetch('https://api.anthropic.com/v1/messages',{
+  const resp=await fetch('https://corsproxy.io/?https://api.anthropic.com/v1/messages',{
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01'},
     body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,messages})
